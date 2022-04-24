@@ -12,9 +12,9 @@ function init(){
 
     let camera = generatePerspectiveCamera();
     scene.add(camera);
+    camera.rotation.x = 90;
 
-    const helper = new THREE.CameraHelper( camera );
-    scene.add( helper );
+    addHelpers(scene, camera);
 
     let light = generateLight('rgb(255, 255, 255)', 1.2);
     scene.add(light);
@@ -25,17 +25,26 @@ function init(){
     scene.add(floor);
 
     scene.background = generateSkybox();
-    console.log(scene);
 
-    let crackman = null;
-    generateGLTFModel(scene, "crackman", crackman, 0.004,0, -0.2, 0 );
+    let crackman = new THREE.Object3D();
+    generateGLTFModel(scene, "crackman", crackman, 0.004, 0, -0.2, 0, true);
 
 
-    let controls = new THREE.OrbitControls(camera, renderer.domElement);
+    let controls = addOrbitControls(camera, renderer);
 
+    console.log(scene.children[5]); //why is it undefined?
+    console.log(crackman); //this has no paernts
     update(renderer, scene, camera, controls);
 
     return scene;
+}
+
+function addHelpers(scene, camera){
+    const axesHelper = new THREE.AxesHelper(20);
+    scene.add(axesHelper);
+
+    const helper = new THREE.CameraHelper(camera);
+    scene.add( helper );
 }
 
 function generateLight(color, intensity){
@@ -81,6 +90,13 @@ function generateRenderer(){
     return renderer;
 }
 
+function addOrbitControls(camera, renderer){
+    let controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.minDistance = 10;
+    controls.maxDistance= 50;
+    return controls;
+}
+
 function generateFloor(){
     const texture = new THREE.TextureLoader().load( "/img/floor.jpg" );
     texture.wrapS = THREE.RepeatWrapping;
@@ -109,17 +125,18 @@ function generateSkybox(){
     ));
 }
 
-function generateGLTFModel(scene, filename, object, size, x, y, z){
+function generateGLTFModel(scene, filename, object, size, x, y, z, castShadow){
     let path = "/models/" + filename + "/scene.gltf";
 
-    loader.load(path, function(gltf) {
-        object = gltf;
-        object.scene.name = filename;
-        object.scene.scale.set(size, size, size);
-        object.scene.position.x = x;
-        object.scene.position.y = y;
-        object.scene.position.z = z;
-        scene.add(object.scene);
+    loader.load(path, function(model) {
+        object = model.scene;
+        object.name = "crackman";
+        object.scale.set(size, size, size);
+        object.position.x = x;
+        object.position.y = y;
+        object.position.z = z;
+        object.castShadow = true;
+        scene.add(object);
     });
 }
 
@@ -159,14 +176,10 @@ function update(renderer, scene, camera, controls){
     controls.maxPolarAngle = (Math.PI / 2);
 
     let crackman = scene.getObjectByName("crackman");
-    let cam = scene.getObjectByName("camera");
-    console.log(scene);
-    console.log(scene.children[4].position); //why is CrackMan undefined????????
-    console.log(cam.position);
+    //console.log(crackman);
     useKeyboard(crackman, camera);
 
-    //camera.lookAt(crackman.scene.position.x, crackman.position.y, crackman.position.z);
-
+    //camera.lookAt(crackman.position.x, crackman.position.y, crackman.position.z); - can not gain acces to position
 
     requestAnimationFrame(function () {
         update(renderer, scene, camera, controls);
