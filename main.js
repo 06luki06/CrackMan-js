@@ -26,26 +26,10 @@ function init(){
 
     scene.background = generateSkybox();
 
-    let obj = new THREE.Object3D();
-    let crackman;
-    //crackman = generateGLTFModel(scene, "crackman", crackman, 0.004, 0, -0.2, 0, true);
-    //scene.add (crackman);
-
-    loader.load("/models/crackman/scene.gltf", function (model){
-        model = model.scene;
-        model.name = "crackman";
-        model.scale.set(0.004, 0.004, 0.004);
-        model.position.x = 0;
-        model.position.y = -0.2;
-        model.position.z = 0;
-
-        scene.add(model);
-    })
+    let crackman = new THREE.Object3D();
+    generateGLTFModel(scene, "crackman", crackman, 0.004, 0, -0.2, 0, true);
 
     let controls = addOrbitControls(camera, renderer);
-
-    //console.log(scene.children[4]); //why is it undefined?
-    //console.log(crackman); //this has no paernts
     update(renderer, scene, camera, controls);
 
     console.log(scene);
@@ -111,7 +95,7 @@ function addOrbitControls(camera, renderer){
 }
 
 function generateFloor(){
-    const texture = new THREE.TextureLoader().load( "/img/floor.jpg" );
+    const texture = new THREE.TextureLoader().load( "./img/floor.jpg" );
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set( 10, 10);
@@ -133,7 +117,7 @@ function generateSkybox(){
     let filenames = ['ft', 'bk', 'up', 'dn', 'rt', 'lf']; //first all x, then y, then z
     return new THREE.CubeTextureLoader().load(filenames.map(
         function(filename){
-            return '/img/skybox/divine_' + filename + ".jpg";
+            return './img/skybox/divine_' + filename + ".jpg";
         }
     ));
 }
@@ -150,37 +134,42 @@ function generateGLTFModel(scene, filename, object, size, x, y, z, castShadow){
         object.position.z = z;
         object.castShadow = true;
 
-        return object;
+        scene.add(object);
     });
 }
 
-function useKeyboard(obj, camera){
+function useKeyboard(obj, camera, scene){
     let step = 10 * clock.getDelta();
+    let obje = scene.getObjectByName("crackman");
 
     if(keyboard.pressed("A")){
         obj.rotation.y = Math.PI / 2;
         obj.translateX(-step);
-        //camera.translateX(step);
+        camera.lookAt(obje.position);
     }
 
     if(keyboard.pressed("D")){
         obj.rotation.y = Math.PI / 2 * -1;
         obj.translateX(-step);
-        //camera.translateX(-step);
+        camera.lookAt(obje.position);
     }
 
     if(keyboard.pressed("W")){
         obj.rotation.y = 0;
         obj.translateX(-step);
-        //camera.translateZ(step);
+        camera.lookAt(obje.position);
     }
 
     if(keyboard.pressed("S")){
         obj.rotation.y = Math.PI;
         obj.translateX(-step);
-        //camera.position.z -= step;
-        //camera.lookAt(obj.position);
+        camera.lookAt(obje.position);
     }
+
+    /*if (!keyboard.pressed("S")){
+        camera.lookAt(obje.position);
+    }*/
+
 
 }
 
@@ -190,10 +179,8 @@ function update(renderer, scene, camera, controls){
     controls.maxPolarAngle = (Math.PI / 2);
 
     let crackman = scene.getObjectByName("crackman");
-    console.log(crackman);
-    useKeyboard(crackman, camera);
+    useKeyboard(crackman, camera, scene);
 
-    camera.lookAt(crackman.position.x, crackman.position.y, crackman.position.z); //- can not gain acces to position
 
     requestAnimationFrame(function () {
         update(renderer, scene, camera, controls);
