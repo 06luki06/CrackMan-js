@@ -26,16 +26,29 @@ function init(){
 
     scene.background = generateSkybox();
 
-    let crackman = new THREE.Object3D();
-    generateGLTFModel(scene, "crackman", crackman, 0.004, 0, -0.2, 0, true);
+    let obj = new THREE.Object3D();
+    let crackman;
+    //crackman = generateGLTFModel(scene, "crackman", crackman, 0.004, 0, -0.2, 0, true);
+    //scene.add (crackman);
 
+    loader.load("/models/crackman/scene.gltf", function (model){
+        model = model.scene;
+        model.name = "crackman";
+        model.scale.set(0.004, 0.004, 0.004);
+        model.position.x = 0;
+        model.position.y = -0.2;
+        model.position.z = 0;
+
+        scene.add(model);
+    })
 
     let controls = addOrbitControls(camera, renderer);
 
-    console.log(scene.children[5]); //why is it undefined?
-    console.log(crackman); //this has no paernts
+    //console.log(scene.children[4]); //why is it undefined?
+    //console.log(crackman); //this has no paernts
     update(renderer, scene, camera, controls);
 
+    console.log(scene);
     return scene;
 }
 
@@ -136,7 +149,8 @@ function generateGLTFModel(scene, filename, object, size, x, y, z, castShadow){
         object.position.y = y;
         object.position.z = z;
         object.castShadow = true;
-        scene.add(object);
+
+        return object;
     });
 }
 
@@ -176,10 +190,10 @@ function update(renderer, scene, camera, controls){
     controls.maxPolarAngle = (Math.PI / 2);
 
     let crackman = scene.getObjectByName("crackman");
-    //console.log(crackman);
+    console.log(crackman);
     useKeyboard(crackman, camera);
 
-    //camera.lookAt(crackman.position.x, crackman.position.y, crackman.position.z); - can not gain acces to position
+    camera.lookAt(crackman.position.x, crackman.position.y, crackman.position.z); //- can not gain acces to position
 
     requestAnimationFrame(function () {
         update(renderer, scene, camera, controls);
