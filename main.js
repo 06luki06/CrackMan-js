@@ -2,7 +2,9 @@ const loader = new THREE.GLTFLoader();
 const clock = new THREE.Clock;
 const keyboard = new THREEx.KeyboardState();
 
-//TODO: create movement for Crackman
+//TODO: create movement for Crackman - more or less done
+//TODO: camera should follow player
+//TODO: create barriers for end of the end
 //TODO: create CoinSpawner
 //TODO: create GhostSpawner
 //TODO: create stat.gui / dat.gui
@@ -13,6 +15,7 @@ function init(){
     let camera = generatePerspectiveCamera();
     scene.add(camera);
     camera.rotation.x = 90;
+    camera.lookAt(scene.position);
 
     addHelpers(scene, camera);
 
@@ -28,6 +31,7 @@ function init(){
 
     let crackman = new THREE.Object3D();
     generateGLTFModel(scene, "crackman", crackman, 0.004, 0, -0.2, 0, true);
+    crackman.add(camera);
 
     let controls = addOrbitControls(camera, renderer);
     update(renderer, scene, camera, controls);
@@ -68,7 +72,7 @@ function generatePerspectiveCamera(){
     );
 
     camera.position.x = 0;
-    camera.position.y = 2;
+    camera.position.y = 5;
     camera.position.z = 0;
 
     //TODO: set camera behind Pacman
@@ -90,7 +94,7 @@ function generateRenderer(){
 function addOrbitControls(camera, renderer){
     let controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.minDistance = 10;
-    controls.maxDistance= 50;
+    controls.maxDistance= 300;
     return controls;
 }
 
@@ -132,7 +136,11 @@ function generateGLTFModel(scene, filename, object, size, x, y, z, castShadow){
         object.position.x = x;
         object.position.y = y;
         object.position.z = z;
-        object.castShadow = true;
+
+        object.traverse(function(object){
+            if(object.isMesh){
+                object.castShadow = true;
+            }});
 
         scene.add(object);
     });
@@ -142,29 +150,35 @@ function useKeyboard(obj, camera, scene){
     let step = 10 * clock.getDelta();
     let obje = scene.getObjectByName("crackman");
 
+
     if(keyboard.pressed("A")){
         obj.rotation.y = Math.PI / 2;
         obj.translateX(-step);
-        camera.lookAt(obje.position);
+        //followObject(camera,obje);
+        //camera.lookAt(obje.position);
     }
 
     if(keyboard.pressed("D")){
         obj.rotation.y = Math.PI / 2 * -1;
         obj.translateX(-step);
-        camera.lookAt(obje.position);
+        //followObject(camera,obje);
+        //camera.lookAt(obje.position);
     }
 
     if(keyboard.pressed("W")){
         obj.rotation.y = 0;
         obj.translateX(-step);
-        camera.lookAt(obje.position);
+        //followObject(camera,obje);
+        //camera.lookAt(obje.position);
     }
 
     if(keyboard.pressed("S")){
         obj.rotation.y = Math.PI;
         obj.translateX(-step);
-        camera.lookAt(obje.position);
+        //followObject(camera,obje);
+        //camera.lookAt(obje.position);
     }
+
 
     /*if (!keyboard.pressed("S")){
         camera.lookAt(obje.position);
@@ -173,18 +187,28 @@ function useKeyboard(obj, camera, scene){
 
 }
 
+function followObject(camera, object){
+    camera.position.x = object.position.x + 0;
+    camera.position.y = object.position.y + 50;
+    camera.position.z = object.position.z + -200;
+    camera.lookAt(object.position);
+}
+
 function update(renderer, scene, camera, controls){
+    let crackman = scene.getObjectByName("crackman");
+    //wconsole.log(crackman);
     renderer.render(scene, camera);
+
     controls.update();
     controls.maxPolarAngle = (Math.PI / 2);
 
-    let crackman = scene.getObjectByName("crackman");
-    useKeyboard(crackman, camera, scene);
+    //useKeyboard(crackman, camera, scene);
 
 
     requestAnimationFrame(function () {
         update(renderer, scene, camera, controls);
     });
 }
+
 
 init();
