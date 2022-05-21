@@ -1,32 +1,62 @@
-//TODO: create barriers for end of the end
-//TODO: create CoinSpawner
-//TODO: create GhostSpawner
-//TODO: create stat.gui / dat.gui
+let scorehtml = document.getElementById("score");
+let highscorehtml = document.getElementById("highscore");
+let btn = document.getElementById("restart");
 
-// standard global variables
+let highscore = localStorage.getItem("highscore");
+if(highscore === null){
+    highscore = 0;
+}
+
 let container, scene, camera, renderer, controls, stats;
 let keyboard = new THREEx.KeyboardState();
 let clock = new THREE.Clock();
+
 const loader = new THREE.GLTFLoader();
 const x_left = -480;
 const x_right = 480;
 const z_front = -460;
 const z_back = 470;
+
 let posX = 0;
 let posZ = 0;
 let score = 0;
 let coinAmount = 0;
+let seconds = 60;
+let timer;
 let coinLight;
-// custom global variables
 let cube;
 let crackman;
 let coin;
 
-generateSceen();
+btn.addEventListener("click", (event) => {
+    location.reload();
+})
+
+generateScene();
 update();
 
 // FUNCTIONS
-function generateSceen(){
+function countdown(){
+    if(seconds <= 60) {
+        document.getElementById("timer").innerHTML = seconds.toString();
+    }
+    if (seconds > 0 ) {
+        seconds--;
+    } else {
+        location.reload();
+    }
+}
+
+document.addEventListener("keypress", () => {
+    if(!timer) {
+        timer = window.setInterval(function() {
+            countdown();
+        }, 1000); // every second
+    }
+});
+
+
+function generateScene(){
     // SCENE
     scene = new THREE.Scene();
     // CAMERA
@@ -58,11 +88,8 @@ function generateSceen(){
     crackman = generateCrackMan();
     scene.add( crackman );
 
-
+    highscorehtml.innerHTML = highscore;
     generateCoin();
-    //const helper = new THREE.CameraHelper( light.shadow.camera );
-    //crackman.add( helper );
-
 }
 
 function update(){
@@ -138,9 +165,8 @@ function generateCamera(){
 function generateRenderer(){
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    container = document.getElementById('content');
     renderer.shadowMap.enabled = true;
-    container.appendChild( renderer.domElement );
+    document.body.appendChild( renderer.domElement );
 }
 
 function generateLight(){
@@ -266,11 +292,17 @@ function generateRandom(min, max){
     return rand;
 }
 
-function generateHit(coinposx, coinposz, crackposx, crackposz){
-    if(coinAmount === 1 && (crackposx >= coinposx - 15 && crackposx <= coinposx + 15) && (crackposz >= coinposz - 10 && crackposz <= coinposz + 10)){
+function generateHit(coinposx, coinposz, crackposx, crackposz) {
+    if (coinAmount === 1 && (crackposx >= coinposx - 15 && crackposx <= coinposx + 15) && (crackposz >= coinposz - 10 && crackposz <= coinposz + 10)) {
         scene.remove(coin);
         coinAmount = 0;
         score++;
+        scorehtml.innerHTML = score.toString();
+
+        if(score > highscore){
+            localStorage.setItem("highscore", score.toString());
+        }
+
         console.log(score);
         generateCoin();
     }
