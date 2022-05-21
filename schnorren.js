@@ -52,7 +52,7 @@ function update(){
 }
 
 function move(){
-    let delta = clock.getDelta(); // secondsd
+    let delta = clock.getDelta(); // seconds
     let moveDistance = 200 * delta; // 200 pixels per second
     let rotateAngle = Math.PI / 2 * delta;   // pi/2 radians (90 degrees) per second
 
