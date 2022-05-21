@@ -1,5 +1,3 @@
-//TODO: create movement for Crackman - more or less done
-//TODO: camera should follow player
 //TODO: create barriers for end of the end
 //TODO: create CoinSpawner
 //TODO: create GhostSpawner
@@ -9,9 +7,20 @@
 let container, scene, camera, renderer, controls, stats;
 let keyboard = new THREEx.KeyboardState();
 let clock = new THREE.Clock();
+const loader = new THREE.GLTFLoader();
+const x_left = -480;
+const x_right = 480;
+const z_front = -460;
+const z_back = 470;
+let posX = 0;
+let posZ = 0;
+let score = 0;
+let coinAmount = 0;
+let coinLight;
 // custom global variables
 let cube;
 let crackman;
+let coin;
 
 generateSceen();
 update();
@@ -33,6 +42,15 @@ function generateSceen(){
     let floor = generateFloor();
     scene.add(floor);
 
+    //Border
+    let borderTop = generateBorderX(x_left - x_right,  z_front - 30);
+    scene.add(borderTop);
+    let borderBack = generateBorderX(x_left - x_right - 35, z_back + 25);
+    scene.add(borderBack);
+    let borderRight = generateBorderZ(z_front - z_back, x_right + 30);
+    scene.add(borderRight);
+    let borderLeft = generateBorderZ(z_front - z_back, x_left - 30);
+    scene.add(borderLeft);
     // SKYBOX/FOG
     scene.background = generateSkybox();
 
@@ -40,6 +58,8 @@ function generateSceen(){
     crackman = generateCrackMan();
     scene.add( crackman );
 
+
+    generateCoin();
     //const helper = new THREE.CameraHelper( light.shadow.camera );
     //crackman.add( helper );
 
@@ -94,6 +114,8 @@ function move(){
 }
 
 function render() {
+    generateHit(posX, posZ, crackman.position.x, crackman.position.z);
+    checkIfValidArea();
     renderer.render( scene, camera );
 }
 
@@ -122,13 +144,9 @@ function generateRenderer(){
 }
 
 function generateLight(){
-    let light = new THREE.PointLight(0xbbbbbb, 100);
-    light.position.set(40,10,0);
+    let light = new THREE.DirectionalLight(0xbbbbbb, 10);
+    light.position.set(40,100,30);
     light.castShadow = true;
-    light.shadow.mapSize.width = 512; // default
-    light.shadow.mapSize.height = 512; // default
-    light.shadow.camera.near = 0.5; // default
-    light.shadow.camera.far = 500; // default
     return light;
 }
 
@@ -146,8 +164,50 @@ function generateFloor(){
     return floor;
 }
 
-function checkIfValidArea(){
+function generateBorderX(difference, z){
+    let borderTexture = new THREE.ImageUtils.loadTexture( 'img/floor.jpg' );
+    borderTexture.wrapS = borderTexture.wrapT = THREE.RepeatWrapping;
+    borderTexture.repeat.set(10, 10);
 
+    const geometry = new THREE.BoxGeometry( difference - 50, 400, 25 );
+    const material = new THREE.MeshBasicMaterial( {map:borderTexture, side:THREE.DoubleSide} );
+    let border = new THREE.Mesh( geometry, material );
+    border.position.x = 0;
+    border.position.y = -190;
+    border.position.z = z;
+    return(border);
+}
+
+function generateBorderZ(difference, x){
+        let borderTexture = new THREE.ImageUtils.loadTexture( 'img/floor.jpg' );
+        borderTexture.wrapS = borderTexture.wrapT = THREE.RepeatWrapping;
+        borderTexture.repeat.set(10, 10);
+
+        const geometry = new THREE.BoxGeometry( 25, 400, difference -75 );
+        const material = new THREE.MeshBasicMaterial( {map:borderTexture, side:THREE.DoubleSide} );
+        let border = new THREE.Mesh( geometry, material );
+        border.position.x = x;
+        border.position.y = -190;
+        border.position.z = 0;
+        return(border);
+}
+
+function checkIfValidArea(){
+    if(crackman.position.x < x_left){
+        crackman.position.x = x_left;
+    }
+
+    if(crackman.position.x > x_right){
+        crackman.position.x = x_right;
+    }
+
+    if(crackman.position.z < z_front){
+        crackman.position.z = z_front;
+    }
+
+    if(crackman.position.z > z_back){
+        crackman.position.z = z_back;
+    }
 }
 
 function generateCrackMan(){
@@ -158,4 +218,60 @@ function generateCrackMan(){
     crackman.castShadow = true;
 
     return crackman;
+}
+
+function generateCoin(){
+    if(coinAmount === 0){
+        loader.load(
+            // resource URL
+            'models/doge_coin/scene.gltf',
+            // called when the resource is loaded
+            function ( gltf ) {
+                coin = gltf.scene;
+                //random pos
+                posX = generateRandom(x_left, x_right);
+                posZ = generateRandom(z_front, z_back);
+                coin.position.set(posX, 15, posZ);
+                coin.scale.set(0.1,0.1,0.1);
+                coin.castShadow = true;
+                coinAmount = 1;
+                coinLight = generateCoinLight();
+                coin.add(coinLight);
+                scene.add(coin);
+            },
+            // called while loading is progressing
+            function ( xhr ) {
+                console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            },
+            // called when loading has errors
+            function ( error ) {
+                console.log( 'An error happened' );
+            }
+        );
+    }
+}
+
+function generateCoinLight(){
+    let light = new THREE.PointLight(0xFFFFFF, 1, 100);
+    light.position.set(0, 100, -50);
+    light.castShadow = true;
+    return light;
+}
+
+function generateRandom(min, max){
+    let difference = max - min;
+    let rand = Math.random();
+    rand = Math.floor( rand * difference);
+    rand += min;
+    return rand;
+}
+
+function generateHit(coinposx, coinposz, crackposx, crackposz){
+    if(coinAmount === 1 && (crackposx >= coinposx - 15 && crackposx <= coinposx + 15) && (crackposz >= coinposz - 10 && crackposz <= coinposz + 10)){
+        scene.remove(coin);
+        coinAmount = 0;
+        score++;
+        console.log(score);
+        generateCoin();
+    }
 }
