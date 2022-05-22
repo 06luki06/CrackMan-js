@@ -8,26 +8,35 @@
     <script defer type="text/javascript" src="./lib/OrbitControls.js"></script>
     <script defer type="text/javascript" src="./lib/threex.keyboardstate.js"></script>
     <script defer type="text/javascript" src="./lib/GLTFLoader.js"></script>
-    <script defer type="text/javascript" src="./lib/OBJLoader.js"></script>
     <script defer type="text/javascript" src="./lib/stats.min.js"></script>
 
-    <script defer type="text/javascript" src="./schnorren.js"></script>
+    <script defer type="text/javascript" src="./main.js"></script>
 </head>
 <body>
 <div id="ui">
+    <div id="logo">
+        <img src="img/FHJLOGO.png" alt="FH Logo" width="80%" height="20%">
+    </div>
+    <br><br>
+    <div id="text">
+        <div id="title">
+            Crackman
+        </div>
+        <br>
+        by
+        <br>
+        Vanessa Riedl & Lukas Riegler
+        <br><br><br>
+        Score: <span id="score">0</span>
+        <br><br>
+        HighScore: <span id="highscore">0</span>
+        <br><br>
+        Timer: <span id="timer">60</span>
+    </div>
+    <br>
     <div id="btn">
         <button type="reset" id="restart">Restart</button>
     </div>
-    <div id="logo">
-        <img src="img/FHJLOGO.png" alt="FH Logo" width="200px" height="80px">
-    </div>
-    Crackman by Vanessa Riedl & Lukas Riegler
-    <br>
-    Score: <span id="score">0</span>
-    <br>
-    HighScore: <span id="highscore">0</span>
-    <br>
-    Timer: <span id="timer">60</span>
 </div>
 </body>
 </html>

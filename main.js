@@ -7,7 +7,7 @@ if(highscore === null){
     highscore = 0;
 }
 
-let container, scene, camera, renderer, controls, stats;
+let container, scene, camera, renderer, stats;
 let keyboard = new THREEx.KeyboardState();
 let clock = new THREE.Clock();
 
@@ -17,10 +17,9 @@ const x_right = 480;
 const z_front = -460;
 const z_back = 470;
 
-let posX = 0;
-let posZ = 0;
+let posX, posZ = 0;
 let score = 0;
-let coinAmount = 0;
+let coinExist = false;
 let seconds = 60;
 let timer;
 let coinLight;
@@ -28,24 +27,25 @@ let cube;
 let crackman;
 let coin;
 
+let state = {
+    cubeColor: changeColor(0xffff00),
+    alphaUnit: 0,
+    isTweenRunning: false
+}
+
+const tweenColors = color => {
+    state = {
+        ...state,
+        previousTweenColor: state.cubeColor,
+        nextTweenColor: color,
+        alphaUnit: 0,
+        isTweenRunning: true
+    }
+}
+
 btn.addEventListener("click", (event) => {
     location.reload();
 })
-
-generateScene();
-update();
-
-// FUNCTIONS
-function countdown(){
-    if(seconds <= 60) {
-        document.getElementById("timer").innerHTML = seconds.toString();
-    }
-    if (seconds > 0 ) {
-        seconds--;
-    } else {
-        location.reload();
-    }
-}
 
 document.addEventListener("keypress", () => {
     if(!timer) {
@@ -55,7 +55,10 @@ document.addEventListener("keypress", () => {
     }
 });
 
+generateScene();
+update();
 
+// FUNCTIONS
 function generateScene(){
     // SCENE
     scene = new THREE.Scene();
@@ -86,73 +89,10 @@ function generateScene(){
 
     // Crackman
     crackman = generateCrackMan();
-    scene.add( crackman );
+    scene.add(crackman);
 
     highscorehtml.innerHTML = highscore;
     generateCoin();
-}
-
-function update(){
-    requestAnimationFrame(update);
-    render();
-    move();
-}
-
-function move(){
-    let delta = clock.getDelta(); // seconds
-    let moveDistance = 200 * delta; // 200 pixels per second
-    let rotateAngle = Math.PI / 2 * delta;   // pi/2 radians (90 degrees) per second
-
-    // local transformations
-    // move forwards/backwards/left/right
-    if (keyboard.pressed("W")) {
-        crackman.translateZ(-moveDistance);
-    }
-    if (keyboard.pressed("S")) {
-        crackman.translateZ(moveDistance);
-    }
-    if (keyboard.pressed("Q")) {
-        crackman.translateX(-moveDistance);
-    }
-    if (keyboard.pressed("E")) {
-        crackman.translateX(moveDistance);
-    }
-
-    // rotate left/right
-    if (keyboard.pressed("A")) {
-        crackman.rotateOnAxis(new THREE.Vector3(0, 1, 0), rotateAngle);
-    }
-    if (keyboard.pressed("D")) {
-        crackman.rotateOnAxis(new THREE.Vector3(0, 1, 0), -rotateAngle);
-    }
-
-    if (keyboard.pressed("Z")){
-        crackman.position.set(0,25.1,0);
-        crackman.rotation.set(0,0,0);
-    }
-
-    let relativeCameraOffset = new THREE.Vector3(0,50,200);
-    let cameraOffset = relativeCameraOffset.applyMatrix4( crackman.matrixWorld );
-
-    camera.position.x = cameraOffset.x;
-    camera.position.y = cameraOffset.y;
-    camera.position.z = cameraOffset.z;
-    camera.lookAt( crackman.position );
-}
-
-function render() {
-    generateHit(posX, posZ, crackman.position.x, crackman.position.z);
-    checkIfValidArea();
-    renderer.render( scene, camera );
-}
-
-function generateSkybox(){
-    let filenames = ['ft', 'bk', 'up', 'dn', 'rt', 'lf']; //first all x, then y, then z
-    return new THREE.CubeTextureLoader().load(filenames.map(
-        function(filename){
-            return './img/skybox/divine_' + filename + ".jpg";
-        }
-    ));
 }
 
 function generateCamera(){
@@ -205,35 +145,26 @@ function generateBorderX(difference, z){
 }
 
 function generateBorderZ(difference, x){
-        let borderTexture = new THREE.ImageUtils.loadTexture( 'img/floor.jpg' );
-        borderTexture.wrapS = borderTexture.wrapT = THREE.RepeatWrapping;
-        borderTexture.repeat.set(10, 10);
+    let borderTexture = new THREE.ImageUtils.loadTexture( 'img/floor.jpg' );
+    borderTexture.wrapS = borderTexture.wrapT = THREE.RepeatWrapping;
+    borderTexture.repeat.set(10, 10);
 
-        const geometry = new THREE.BoxGeometry( 25, 400, difference -75 );
-        const material = new THREE.MeshBasicMaterial( {map:borderTexture, side:THREE.DoubleSide} );
-        let border = new THREE.Mesh( geometry, material );
-        border.position.x = x;
-        border.position.y = -190;
-        border.position.z = 0;
-        return(border);
+    const geometry = new THREE.BoxGeometry( 25, 400, difference -75 );
+    const material = new THREE.MeshBasicMaterial( {map:borderTexture, side:THREE.DoubleSide} );
+    let border = new THREE.Mesh( geometry, material );
+    border.position.x = x;
+    border.position.y = -190;
+    border.position.z = 0;
+    return(border);
 }
 
-function checkIfValidArea(){
-    if(crackman.position.x < x_left){
-        crackman.position.x = x_left;
-    }
-
-    if(crackman.position.x > x_right){
-        crackman.position.x = x_right;
-    }
-
-    if(crackman.position.z < z_front){
-        crackman.position.z = z_front;
-    }
-
-    if(crackman.position.z > z_back){
-        crackman.position.z = z_back;
-    }
+function generateSkybox(){
+    let filenames = ['ft', 'bk', 'up', 'dn', 'rt', 'lf']; //first all x, then y, then z
+    return new THREE.CubeTextureLoader().load(filenames.map(
+        function(filename){
+            return './img/skybox/divine_' + filename + ".jpg";
+        }
+    ));
 }
 
 function generateCrackMan(){
@@ -242,12 +173,11 @@ function generateCrackMan(){
     crackman = new THREE.Mesh( geometry, material );
     crackman.position.set(0, 15, 0);
     crackman.castShadow = true;
-
     return crackman;
 }
 
 function generateCoin(){
-    if(coinAmount === 0){
+    if(coinExist === false){
         loader.load(
             // resource URL
             'models/doge_coin/scene.gltf',
@@ -260,7 +190,7 @@ function generateCoin(){
                 coin.position.set(posX, 15, posZ);
                 coin.scale.set(0.1,0.1,0.1);
                 coin.castShadow = true;
-                coinAmount = 1;
+                coinExist = true;
                 coinLight = generateCoinLight();
                 coin.add(coinLight);
                 scene.add(coin);
@@ -284,6 +214,91 @@ function generateCoinLight(){
     return light;
 }
 
+function update(){
+    requestAnimationFrame(update);
+    render();
+    move();
+}
+
+function render() {
+    generateHit(posX, posZ, crackman.position.x, crackman.position.z);
+    checkIfValidArea();
+    if(coinExist === true){
+        coin.rotation.y += 0.05;
+    }
+    if (state.isTweenRunning && !state.previousTweenColor.equals(state.nextTweenColor) ) {
+        state.alphaUnit = +(state.alphaUnit + 0.01).toFixed(2);
+        state.cubeColor = state.cubeColor.lerpColors(state.previousTweenColor, state.nextTweenColor, state.alphaUnit);
+        crackman.material.color.set(state.cubeColor);
+    } else {
+        state.isTweenRunning = false;
+    }
+    renderer.render( scene, camera );
+}
+
+function move(){
+    let delta = clock.getDelta(); // seconds
+    let moveDistance = 200 * delta; // 200 pixels per second
+    let rotateAngle = Math.PI / 2 * delta;   // pi/2 radians (90 degrees) per second
+    tweenColors(changeColor(0xffff00));
+
+    // local transformations
+    // move forwards/backwards/left/right
+    if (keyboard.pressed("W")) {
+        crackman.translateZ(-moveDistance);
+        tweenColors(changeColor(0xff0000));
+    }
+    if (keyboard.pressed("S")) {
+        crackman.translateZ(moveDistance);
+        tweenColors(changeColor(0xff0000));
+    }
+    if (keyboard.pressed("Q")) {
+        crackman.translateX(-moveDistance);
+        tweenColors(changeColor(0xADD8E6));
+    }
+    if (keyboard.pressed("E")) {
+        crackman.translateX(moveDistance);
+        tweenColors(changeColor(0xADD8E6));
+    }
+
+    // rotate left/right
+    if (keyboard.pressed("A")) {
+        crackman.rotateOnAxis(new THREE.Vector3(0, 1, 0), rotateAngle);
+        tweenColors(changeColor(0x00ff00));
+
+    }
+    if (keyboard.pressed("D")) {
+        crackman.rotateOnAxis(new THREE.Vector3(0, 1, 0), -rotateAngle);
+        tweenColors(changeColor(0x00ff00));
+    }
+
+    let relativeCameraOffset = new THREE.Vector3(0,50,200);
+    let cameraOffset = relativeCameraOffset.applyMatrix4( crackman.matrixWorld );
+
+    camera.position.x = cameraOffset.x;
+    camera.position.y = cameraOffset.y;
+    camera.position.z = cameraOffset.z;
+    camera.lookAt( crackman.position );
+}
+
+function checkIfValidArea(){
+    if(crackman.position.x < x_left){
+        crackman.position.x = x_left;
+    }
+
+    if(crackman.position.x > x_right){
+        crackman.position.x = x_right;
+    }
+
+    if(crackman.position.z < z_front){
+        crackman.position.z = z_front;
+    }
+
+    if(crackman.position.z > z_back){
+        crackman.position.z = z_back;
+    }
+}
+
 function generateRandom(min, max){
     let difference = max - min;
     let rand = Math.random();
@@ -293,9 +308,9 @@ function generateRandom(min, max){
 }
 
 function generateHit(coinposx, coinposz, crackposx, crackposz) {
-    if (coinAmount === 1 && (crackposx >= coinposx - 15 && crackposx <= coinposx + 15) && (crackposz >= coinposz - 10 && crackposz <= coinposz + 10)) {
+    if (coinExist === true && (crackposx >= coinposx - 15 && crackposx <= coinposx + 15) && (crackposz >= coinposz - 10 && crackposz <= coinposz + 10)) {
         scene.remove(coin);
-        coinAmount = 0;
+        coinExist = false;
         score++;
         scorehtml.innerHTML = score.toString();
 
@@ -303,7 +318,21 @@ function generateHit(coinposx, coinposz, crackposx, crackposz) {
             localStorage.setItem("highscore", score.toString());
         }
 
-        console.log(score);
         generateCoin();
+    }
+}
+
+function changeColor(hex){
+    return new THREE.Color(hex);
+}
+
+function countdown(){
+    if(seconds <= 60) {
+        document.getElementById("timer").innerHTML = seconds.toString();
+    }
+    if (seconds > 0 ) {
+        seconds--;
+    } else {
+        location.reload();
     }
 }
