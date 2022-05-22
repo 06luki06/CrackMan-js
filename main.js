@@ -12,6 +12,8 @@ let keyboard = new THREEx.KeyboardState();
 let clock = new THREE.Clock();
 
 const loader = new THREE.GLTFLoader();
+const listener = new THREE.AudioListener();
+const sound = new THREE.Audio( listener );
 const x_left = -480;
 const x_right = 480;
 const z_front = -460;
@@ -21,14 +23,7 @@ let posX, posZ = 0;
 let score = 0;
 let coinExist = false;
 let seconds = 60;
-let timer;
-let coinLight;
-let cube;
-let crackman;
-let coin;
-
-const listener = new THREE.AudioListener();
-const sound = new THREE.Audio( listener );
+let timer, coinLight, cube, crackman, coin;
 
 let state = {
     cubeColor: changeColor(0xffff00),
@@ -46,7 +41,7 @@ const tweenColors = color => {
     }
 }
 
-btn.addEventListener("click", (event) => {
+btn.addEventListener("click", () => {
     location.reload();
 })
 
@@ -204,7 +199,7 @@ function generateCoin(){
             },
             // called when loading has errors
             function ( error ) {
-                console.log( 'An error happened' );
+                console.log( 'An error happened' + error);
             }
         );
     }
@@ -268,7 +263,6 @@ function move(){
     if (keyboard.pressed("A")) {
         crackman.rotateOnAxis(new THREE.Vector3(0, 1, 0), rotateAngle);
         tweenColors(changeColor(0x00ff00));
-
     }
     if (keyboard.pressed("D")) {
         crackman.rotateOnAxis(new THREE.Vector3(0, 1, 0), -rotateAngle);
@@ -288,15 +282,12 @@ function checkIfValidArea(){
     if(crackman.position.x < x_left){
         crackman.position.x = x_left;
     }
-
     if(crackman.position.x > x_right){
         crackman.position.x = x_right;
     }
-
     if(crackman.position.z < z_front){
         crackman.position.z = z_front;
     }
-
     if(crackman.position.z > z_back){
         crackman.position.z = z_back;
     }
@@ -310,8 +301,8 @@ function generateRandom(min, max){
     return rand;
 }
 
-function generateHit(coinposx, coinposz, crackposx, crackposz) {
-    if (coinExist === true && (crackposx >= coinposx - 15 && crackposx <= coinposx + 15) && (crackposz >= coinposz - 10 && crackposz <= coinposz + 10)) {
+function generateHit(coinPosX, coinPosZ, crackPosX, crackPosZ) {
+    if (coinExist === true && (crackPosX >= coinPosX - 15 && crackPosX <= coinPosX + 15) && (crackPosZ >= coinPosZ - 10 && crackPosZ <= coinPosZ + 10)) {
         scene.remove(coin);
         coinExist = false;
         score++;
