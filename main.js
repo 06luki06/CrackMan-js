@@ -27,6 +27,9 @@ let cube;
 let crackman;
 let coin;
 
+const listener = new THREE.AudioListener();
+const sound = new THREE.Audio( listener );
+
 let state = {
     cubeColor: changeColor(0xffff00),
     alphaUnit: 0,
@@ -317,6 +320,14 @@ function generateHit(coinposx, coinposz, crackposx, crackposz) {
         if(score > highscore){
             localStorage.setItem("highscore", score.toString());
         }
+
+        const audioLoader = new THREE.AudioLoader();
+        audioLoader.load( 'sounds/Coin.wav', function( buffer ) {
+            sound.setBuffer( buffer );
+            sound.setLoop( false );
+            sound.setVolume( 0.5 );
+            sound.play();
+        });
 
         generateCoin();
     }
